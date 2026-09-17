@@ -1,4 +1,4 @@
-f// api/chat.js — BABAMAN secure backend
+// api/chat.js — BABAMAN secure backend
 // Your Anthropic API key lives ONLY here, stored safely in Vercel.
 // No one browsing the website can ever see it.
 
@@ -30,29 +30,24 @@ WHAT YOU NEVER DO:
 - Pretend certainty where scholars have debated for centuries
 - Lose your warmth, even on the hardest questions`;
 
-// Rate limiter: max 20 questions per IP address per hour
 const rateLimitMap = new Map();
 const RATE_LIMIT = 20;
-const RATE_WINDOW = 60 * 60 * 1000; // 1 hour in milliseconds
+const RATE_WINDOW = 60 * 60 * 1000;
 
 function checkRateLimit(ip) {
   const now = Date.now();
   const entry = rateLimitMap.get(ip) || { count: 0, start: now };
-
   if (now - entry.start > RATE_WINDOW) {
     rateLimitMap.set(ip, { count: 1, start: now });
     return true;
   }
-
   if (entry.count >= RATE_LIMIT) return false;
-
   entry.count++;
   rateLimitMap.set(ip, entry);
   return true;
 }
 
 export default async function handler(req, res) {
-  // Allow requests from your website only
   const allowedOrigin = process.env.ALLOWED_ORIGIN || '*';
   res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -61,28 +56,24 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  // Check rate limit
   const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.socket?.remoteAddress || 'unknown';
   if (!checkRateLimit(ip)) {
     return res.status(429).json({ error: 'Too many questions for now, my friend. Please return in an hour.' });
   }
 
-  // Validate the incoming message list
   const { messages } = req.body || {};
   if (!messages || !Array.isArray(messages) || messages.length === 0) {
     return res.status(400).json({ error: 'Invalid request' });
   }
 
-  // Only keep the last 20 messages to save costs
   const trimmedMessages = messages.slice(-20);
 
-  // Call Anthropic using your secret API key
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY,  // ← your secret key, safe on the server
+        'x-api-key': process.env.ANTHROPIC_API_KEY,
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
