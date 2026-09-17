@@ -1,4 +1,4 @@
-// api/chat.js — BABAMAN secure backend
+f// api/chat.js — BABAMAN secure backend
 // Your Anthropic API key lives ONLY here, stored safely in Vercel.
 // No one browsing the website can ever see it.
 
@@ -87,7 +87,7 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 1000,
+        max_tokens: 2000,
         system: SYSTEM,
         messages: trimmedMessages
       })
